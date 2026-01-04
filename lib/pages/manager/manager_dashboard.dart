@@ -1,41 +1,38 @@
 import 'package:flutter/material.dart';
-import 'add_manager_page.dart';
-import 'branch_page.dart';
-import 'analytics_page.dart';
-import 'profile_page.dart';
-import 'add_item_page.dart';
+import 'add_waiter_page.dart';
+import 'branch_analytics.dart';
+import 'menu_items_page.dart';
 
-class AdminDashboard extends StatelessWidget {
-  const AdminDashboard({super.key});
+class ManagerDashboard extends StatelessWidget {
+  const ManagerDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
     final items = [
       {
-        "title": "Add Manager",
+        "title": "Add Waiter",
         "icon": Icons.person_add,
-        "page": const AddManagerPage(),
+        "page": const AddWaiterPage(),
       },
-      {"title": "Add Branch", "icon": Icons.store, "page": const BranchPage()},
+      {
+        "title": "Add Items in menu",
+        "icon": Icons.store,
+        "page": const MenuItemsPage(),
+      },
       {
         "title": "View Analytics",
         "icon": Icons.bar_chart,
-        "page": const AnalyticsPage(),
+        "page": const BranchAnalyticsPage(),
       },
-      {
-        "title": "Profile",
-        "icon": Icons.account_circle,
-        "page": const ProfilePage(),
-      },
-      {
-        "title": "Add Item",
-        "icon": Icons.add_shopping_cart,
-        "page": const AddItemPage(),
-      },
+      // {
+      //   "title": "Profile",
+      //   "icon": Icons.account_circle,
+      //   "page": const ProfilePage(),
+      // },
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Admin Dashboard")),
+      appBar: AppBar(title: const Text("Manager Dashboard")),
       body: GridView.builder(
         padding: const EdgeInsets.all(20),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

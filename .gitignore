@@ -50,3 +50,4 @@ app.*.map.json
 analysis_options.yaml
 pubspec.yaml
 pubspec.lock
+.env

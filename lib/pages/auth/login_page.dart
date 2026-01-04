@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../admin/admin_dashboard.dart';
 import '../customer/customer_page.dart';
-import '../manager/manager_page.dart';
+import '../manager/manager_dashboard.dart';
 import '../waiter/waiter_page.dart';
 import 'register_page.dart';
 import '../../utils/validators.dart';
@@ -52,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
       } else if (role == 'manager') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const ManagerPage()),
+          MaterialPageRoute(builder: (_) => const ManagerDashboard()),
         );
       } else if (role == 'waiter') {
         Navigator.pushReplacement(

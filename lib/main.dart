@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'pages/auth/login_page.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await Firebase.initializeApp();
+  await Supabase.initialize(
+    url: 'https://ethxajhkndqddgdzlkig.supabase.co',
+    anonKey: 'sb_publishable_25WlMoij1XPPpXGWnvcInw_FJtWM49A',
+  );
   runApp(const MyApp());
 }
 
