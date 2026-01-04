@@ -9,8 +9,8 @@ void main() async {
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp();
   await Supabase.initialize(
-    url: 'https://ethxajhkndqddgdzlkig.supabase.co',
-    anonKey: 'sb_publishable_25WlMoij1XPPpXGWnvcInw_FJtWM49A',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
   runApp(const MyApp());
 }
