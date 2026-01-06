@@ -35,6 +35,7 @@ class _RegisterPageState extends State<RegisterPage> {
         'full_name': _nameController.text.trim(),
         'role': 'customer',
         'branch_id': null,
+        'created_at': FieldValue.serverTimestamp(),
       });
 
       ScaffoldMessenger.of(context).showSnackBar(

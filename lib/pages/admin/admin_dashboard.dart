@@ -4,6 +4,7 @@ import 'branch_page.dart';
 import 'analytics_page.dart';
 import 'profile_page.dart';
 import 'add_item_page.dart';
+import 'view_workers.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -31,6 +32,11 @@ class AdminDashboard extends StatelessWidget {
         "title": "Add Item",
         "icon": Icons.add_shopping_cart,
         "page": const AddItemPage(),
+      },
+      {
+        "title": "View Workers",
+        "icon": Icons.group,
+        "page": const ViewWorkersPage(),
       },
     ];
 

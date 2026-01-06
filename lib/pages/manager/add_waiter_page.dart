@@ -37,6 +37,7 @@ class _AddWaiterPageState extends State<AddWaiterPage> {
         'full_name': _nameController.text.trim(),
         'role': 'waiter',
         'branch_id': null,
+        'created_at': FieldValue.serverTimestamp(),
       });
 
       _nameController.clear();

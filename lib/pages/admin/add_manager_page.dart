@@ -37,6 +37,7 @@ class _AddManagerPageState extends State<AddManagerPage> {
         'full_name': _nameController.text.trim(),
         'role': 'manager',
         'branch_id': null,
+        'created_at': FieldValue.serverTimestamp(),
       });
 
       _nameController.clear();

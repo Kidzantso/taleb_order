@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'add_waiter_page.dart';
 import 'branch_analytics.dart';
 import 'menu_items_page.dart';
+import 'view_waiters.dart';
 
 class ManagerDashboard extends StatelessWidget {
   const ManagerDashboard({super.key});
@@ -24,11 +25,11 @@ class ManagerDashboard extends StatelessWidget {
         "icon": Icons.bar_chart,
         "page": const BranchAnalyticsPage(),
       },
-      // {
-      //   "title": "Profile",
-      //   "icon": Icons.account_circle,
-      //   "page": const ProfilePage(),
-      // },
+      {
+        "title": "View Waiters",
+        "icon": Icons.group,
+        "page": const ViewWaitersPage(),
+      },
     ];
 
     return Scaffold(
