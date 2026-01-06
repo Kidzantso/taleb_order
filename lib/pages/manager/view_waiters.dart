@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart'; // ✅ for date formatting
+import 'package:intl/intl.dart';
 
 class ViewWaitersPage extends StatefulWidget {
   const ViewWaitersPage({super.key});
@@ -10,18 +10,17 @@ class ViewWaitersPage extends StatefulWidget {
 }
 
 class _ViewWaitersPageState extends State<ViewWaitersPage> {
-  String _sortBy = "alphabetical"; // default sort
+  String _sortBy = "alphabetical";
 
   @override
   Widget build(BuildContext context) {
     final _firestore = FirebaseFirestore.instance;
-    final dateFormat = DateFormat('yyyy-MM-dd'); // ✅ format only date
+    final dateFormat = DateFormat('dd/MM/yy');
 
     return Scaffold(
       appBar: AppBar(title: const Text("View Waiters")),
       body: Column(
         children: [
-          // 🔽 Sorting dropdown
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -38,8 +37,6 @@ class _ViewWaitersPageState extends State<ViewWaitersPage> {
               ),
             ],
           ),
-
-          // 🔽 Table
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _firestore
@@ -47,13 +44,11 @@ class _ViewWaitersPageState extends State<ViewWaitersPage> {
                   .where('role', isEqualTo: 'waiter')
                   .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (!snapshot.hasData)
                   return const Center(child: CircularProgressIndicator());
-                }
 
                 var docs = snapshot.data!.docs;
 
-                // Apply sorting
                 if (_sortBy == "alphabetical") {
                   docs.sort(
                     (a, b) => a['full_name'].toString().toLowerCase().compareTo(
@@ -71,28 +66,90 @@ class _ViewWaitersPageState extends State<ViewWaitersPage> {
                   });
                 }
 
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columns: const [
-                      DataColumn(label: Text("Name")),
-                      DataColumn(label: Text("Created At")),
-                    ],
-                    rows: docs.map((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final createdAt = data['created_at'] as Timestamp?;
-                      final formattedDate = createdAt != null
-                          ? dateFormat.format(createdAt.toDate())
-                          : "N/A";
+                return DataTable(
+                  columnSpacing: 20,
+                  columns: const [
+                    DataColumn(label: Text("Name")),
+                    DataColumn(label: Text("Date")),
+                    DataColumn(label: Text("Actions")),
+                  ],
+                  rows: docs.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final createdAt = data['created_at'] as Timestamp?;
+                    final formattedDate = createdAt != null
+                        ? dateFormat.format(createdAt.toDate())
+                        : "N/A";
 
-                      return DataRow(
-                        cells: [
-                          DataCell(Text(data['full_name'] ?? "")),
-                          DataCell(Text(formattedDate)),
-                        ],
-                      );
-                    }).toList(),
-                  ),
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          Tooltip(
+                            message: data['full_name'] ?? "",
+                            child: SizedBox(
+                              width: 65,
+                              child: Text(
+                                data['full_name'] ?? "",
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          SizedBox(width: 65, child: Text(formattedDate)),
+                        ),
+                        DataCell(
+                          SizedBox(
+                            width: 40,
+                            child: Center(
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                  size: 18,
+                                ),
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text("Confirm Delete"),
+                                      content: Text(
+                                        "Delete ${data['full_name']}?",
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(ctx, false),
+                                          child: const Text("Cancel"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(ctx, true),
+                                          child: const Text("Delete"),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    await _firestore
+                                        .collection('users')
+                                        .doc(doc.id)
+                                        .delete();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          "${data['full_name']} deleted ✅",
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
                 );
               },
             ),

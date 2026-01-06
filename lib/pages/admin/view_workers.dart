@@ -16,13 +16,12 @@ class _ViewWorkersPageState extends State<ViewWorkersPage> {
   @override
   Widget build(BuildContext context) {
     final _firestore = FirebaseFirestore.instance;
-    final dateFormat = DateFormat('yyyy-MM-dd');
+    final dateFormat = DateFormat('dd/MM/yy');
 
     return Scaffold(
       appBar: AppBar(title: const Text("View Workers")),
       body: Column(
         children: [
-          // 🔽 Filters
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -49,24 +48,19 @@ class _ViewWorkersPageState extends State<ViewWorkersPage> {
               ),
             ],
           ),
-
-          // 🔽 Table
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _firestore.collection('users').snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (!snapshot.hasData)
                   return const Center(child: CircularProgressIndicator());
-                }
 
                 var docs = snapshot.data!.docs;
 
-                // Apply filter
                 if (_filterRole != "all") {
                   docs = docs.where((d) => d['role'] == _filterRole).toList();
                 }
 
-                // Apply sorting
                 if (_sortBy == "alphabetical") {
                   docs.sort(
                     (a, b) => a['full_name'].toString().toLowerCase().compareTo(
@@ -74,37 +68,122 @@ class _ViewWorkersPageState extends State<ViewWorkersPage> {
                     ),
                   );
                 } else {
-                  docs.sort(
-                    (a, b) => (a['created_at'] as Timestamp).compareTo(
-                      b['created_at'] as Timestamp,
-                    ),
-                  );
+                  docs.sort((a, b) {
+                    final aDate = a['created_at'] as Timestamp?;
+                    final bDate = b['created_at'] as Timestamp?;
+                    if (aDate == null && bDate == null) return 0;
+                    if (aDate == null) return 1;
+                    if (bDate == null) return -1;
+                    return aDate.compareTo(bDate);
+                  });
                 }
 
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columns: const [
-                      DataColumn(label: Text("Name")),
-                      DataColumn(label: Text("Role")),
-                      DataColumn(label: Text("Created At")),
-                    ],
-                    rows: docs.map((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final createdAt = data['created_at'] as Timestamp?;
-                      final formattedDate = createdAt != null
-                          ? dateFormat.format(createdAt.toDate())
-                          : "N/A";
+                return DataTable(
+                  columnSpacing: 20,
+                  columns: const [
+                    DataColumn(label: Text("Name")),
+                    DataColumn(label: Text("R")),
+                    DataColumn(label: Text("Date")),
+                    DataColumn(label: Text("Actions")),
+                  ],
+                  rows: docs.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final createdAt = data['created_at'] as Timestamp?;
+                    final formattedDate = createdAt != null
+                        ? dateFormat.format(createdAt.toDate())
+                        : "N/A";
 
-                      return DataRow(
-                        cells: [
-                          DataCell(Text(data['full_name'] ?? "")),
-                          DataCell(Text(data['role'] ?? "")),
-                          DataCell(Text(formattedDate)),
-                        ],
-                      );
-                    }).toList(),
-                  ),
+                    String roleLetter = "";
+                    switch (data['role']) {
+                      case "manager":
+                        roleLetter = "M";
+                        break;
+                      case "waiter":
+                        roleLetter = "W";
+                        break;
+                      case "customer":
+                        roleLetter = "C";
+                        break;
+                      case "admin":
+                        roleLetter = "A";
+                        break;
+                    }
+
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          Tooltip(
+                            message: data['full_name'] ?? "",
+                            child: SizedBox(
+                              width: 65,
+                              child: Text(
+                                data['full_name'] ?? "",
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                        DataCell(SizedBox(width: 20, child: Text(roleLetter))),
+                        DataCell(
+                          SizedBox(width: 65, child: Text(formattedDate)),
+                        ),
+                        DataCell(
+                          SizedBox(
+                            width: 40,
+                            child: Center(
+                              child: data['role'] == "admin"
+                                  ? const Text("-") // centered dash
+                                  : IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                        size: 18,
+                                      ),
+                                      onPressed: () async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: const Text("Confirm Delete"),
+                                            content: Text(
+                                              "Delete ${data['full_name']}?",
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, false),
+                                                child: const Text("Cancel"),
+                                              ),
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, true),
+                                                child: const Text("Delete"),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm == true) {
+                                          await _firestore
+                                              .collection('users')
+                                              .doc(doc.id)
+                                              .delete();
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                "${data['full_name']} deleted ✅",
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
                 );
               },
             ),
