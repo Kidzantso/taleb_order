@@ -15,12 +15,14 @@ class _AddManagerPageState extends State<AddManagerPage> {
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
 
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   Future<void> addManager() async {
-    if (!validateField(context, _nameController.text, "Full Name") ||
+    if (!validateField(context, _firstNameController.text, "First Name") ||
+        !validateField(context, _lastNameController.text, "Last Name") ||
         !validateEmail(context, _emailController.text) ||
         !validateField(context, _passwordController.text, "Password")) {
       return;
@@ -32,15 +34,20 @@ class _AddManagerPageState extends State<AddManagerPage> {
         password: _passwordController.text.trim(),
       );
 
+      // ✅ Concatenate first + last name
+      final fullName =
+          "${_firstNameController.text.trim()} ${_lastNameController.text.trim()}";
+
       await _firestore.collection('users').doc(managerCred.user!.uid).set({
         'email': _emailController.text.trim(),
-        'full_name': _nameController.text.trim(),
+        'full_name': fullName,
         'role': 'manager',
         'branch_id': null,
         'created_at': FieldValue.serverTimestamp(),
       });
 
-      _nameController.clear();
+      _firstNameController.clear();
+      _lastNameController.clear();
       _emailController.clear();
       _passwordController.clear();
 
@@ -50,6 +57,8 @@ class _AddManagerPageState extends State<AddManagerPage> {
     } catch (e) {
       _emailController.clear();
       _passwordController.clear();
+      _firstNameController.clear();
+      _lastNameController.clear();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Invalid email or password format")),
       );
@@ -64,7 +73,8 @@ class _AddManagerPageState extends State<AddManagerPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            customTextField(_nameController, "Full Name"),
+            customTextField(_firstNameController, "First Name"),
+            customTextField(_lastNameController, "Last Name"),
             customTextField(_emailController, "Email"),
             customTextField(_passwordController, "Password", obscure: true),
             const SizedBox(height: 20),

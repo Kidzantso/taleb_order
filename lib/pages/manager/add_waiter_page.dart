@@ -15,32 +15,39 @@ class _AddWaiterPageState extends State<AddWaiterPage> {
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
 
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  Future<void> addManager() async {
-    if (!validateField(context, _nameController.text, "Full Name") ||
+  Future<void> addWaiter() async {
+    if (!validateField(context, _firstNameController.text, "First Name") ||
+        !validateField(context, _lastNameController.text, "Last Name") ||
         !validateEmail(context, _emailController.text) ||
         !validateField(context, _passwordController.text, "Password")) {
       return;
     }
 
     try {
-      UserCredential managerCred = await _auth.createUserWithEmailAndPassword(
+      UserCredential waiterCred = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      await _firestore.collection('users').doc(managerCred.user!.uid).set({
+      // ✅ Concatenate first + last name
+      final fullName =
+          "${_firstNameController.text.trim()} ${_lastNameController.text.trim()}";
+
+      await _firestore.collection('users').doc(waiterCred.user!.uid).set({
         'email': _emailController.text.trim(),
-        'full_name': _nameController.text.trim(),
+        'full_name': fullName,
         'role': 'waiter',
         'branch_id': null,
         'created_at': FieldValue.serverTimestamp(),
       });
 
-      _nameController.clear();
+      _firstNameController.clear();
+      _lastNameController.clear();
       _emailController.clear();
       _passwordController.clear();
 
@@ -50,6 +57,8 @@ class _AddWaiterPageState extends State<AddWaiterPage> {
     } catch (e) {
       _emailController.clear();
       _passwordController.clear();
+      _firstNameController.clear();
+      _lastNameController.clear();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Invalid email or password format")),
       );
@@ -64,12 +73,13 @@ class _AddWaiterPageState extends State<AddWaiterPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            customTextField(_nameController, "Full Name"),
+            customTextField(_firstNameController, "First Name"),
+            customTextField(_lastNameController, "Last Name"),
             customTextField(_emailController, "Email"),
             customTextField(_passwordController, "Password", obscure: true),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: addManager,
+              onPressed: addWaiter,
               child: const Text("Add Waiter"),
             ),
           ],
