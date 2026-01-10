@@ -1,14 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'add_waiter_page.dart';
 import 'branch_analytics.dart';
 import 'menu_items_page.dart';
 import 'view_waiters.dart';
 
-class ManagerDashboard extends StatelessWidget {
+class ManagerDashboard extends StatefulWidget {
   const ManagerDashboard({super.key});
 
   @override
+  State<ManagerDashboard> createState() => _ManagerDashboardState();
+}
+
+class _ManagerDashboardState extends State<ManagerDashboard> {
+  final _firestore = FirebaseFirestore.instance;
+  String? _branchId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBranchId();
+  }
+
+  Future<void> _loadBranchId() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final userDoc = await _firestore.collection('users').doc(uid).get();
+    setState(() => _branchId = userDoc.data()?['branch_id']);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_branchId == null) {
+      return const Scaffold(body: Center(child: Text("No branch linked yet")));
+    }
+
     final items = [
       {
         "title": "Add Waiter",
@@ -18,7 +45,7 @@ class ManagerDashboard extends StatelessWidget {
       {
         "title": "Add Items in menu",
         "icon": Icons.store,
-        "page": const MenuItemsPage(),
+        "page": MenuItemsPage(branchId: _branchId!), // pass branchId
       },
       {
         "title": "View Analytics",
@@ -37,7 +64,7 @@ class ManagerDashboard extends StatelessWidget {
       body: GridView.builder(
         padding: const EdgeInsets.all(20),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, // 2 icons per row
+          crossAxisCount: 2,
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
         ),

@@ -6,6 +6,7 @@ import '../../widgets/custom_widget.dart';
 import '../../utils/validators.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddItemPage extends StatefulWidget {
   const AddItemPage({super.key});
@@ -22,29 +23,28 @@ class _AddItemPageState extends State<AddItemPage> {
   final _descriptionController = TextEditingController();
 
   String? _selectedCategory;
-  File? _localImageFile; // preview before upload
-  String? _imageUrl; // final Supabase URL
+  File? _localImageFile;
+  String? _imageUrl;
+
+  List<String> _selectedBranchIds = [];
+  bool _selectAllBranches = false;
 
   final List<String> categories = [
     "appetizers",
     "soups",
     "breakfast",
-    "launch",
+    "lunch",
     "fast-food",
     "desserts",
     "hot-drinks",
     "cold-beverages",
   ];
 
-  /// Pick image locally (no upload yet)
   Future<void> pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
     if (pickedFile != null) {
-      setState(() {
-        _localImageFile = File(pickedFile.path);
-      });
+      setState(() => _localImageFile = File(pickedFile.path));
     }
   }
 
@@ -52,31 +52,24 @@ class _AddItemPageState extends State<AddItemPage> {
     final bytes = await file.readAsBytes();
     final uniqueId = const Uuid().v4();
     final fileName = "$uniqueId.jpg";
-
     try {
       final response = await Supabase.instance.client.storage
           .from('food-images')
           .uploadBinary(fileName, bytes);
-
-      // ✅ Success can be "" or "bucketName/fileName"
       if (response == "" || response.contains(fileName)) {
-        final publicUrl = Supabase.instance.client.storage
+        return Supabase.instance.client.storage
             .from('food-images')
             .getPublicUrl(fileName);
-        print("Public URL: $publicUrl");
-        return publicUrl;
-      } else {
-        print("Unexpected upload response: $response");
-        return null;
       }
-    } catch (e) {
-      print("Upload error: $e");
+      return null;
+    } catch (_) {
       return null;
     }
   }
 
   Future<void> addItem() async {
-    if (!validateField(context, _nameController.text, "Item Name") ||
+    if (_selectedBranchIds.isEmpty ||
+        !validateField(context, _nameController.text, "Item Name") ||
         !validateField(context, _priceController.text, "Item Price") ||
         !validateField(
           context,
@@ -85,16 +78,14 @@ class _AddItemPageState extends State<AddItemPage> {
         ) ||
         _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill all fields and select a category"),
-        ),
+        const SnackBar(content: Text("Fill all fields and select branches")),
       );
       return;
     }
+
     if (_localImageFile != null) {
       _imageUrl = await uploadImage(_localImageFile!);
     }
-
     if (_imageUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Image upload failed, item not saved")),
@@ -102,35 +93,59 @@ class _AddItemPageState extends State<AddItemPage> {
       return;
     }
 
-    // ✅ Firestore will now save the correct URL
-    await _firestore.collection('items').add({
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    // Save global item
+    final globalItemRef = await _firestore.collection('items').add({
       'item_name': _nameController.text.trim(),
       'item_price': double.tryParse(_priceController.text.trim()) ?? 0,
       'item_description': _descriptionController.text.trim(),
       'item_category': _selectedCategory,
       'item_photo': _imageUrl,
+      'is_active': true,
+      'created_at': FieldValue.serverTimestamp(),
+      'created_by': uid,
     });
 
-    print("Item saved in Firestore with ID: $_imageUrl");
-    // After Firestore write
+    // Assign to selected branches
+    for (var branchId in _selectedBranchIds) {
+      await _firestore
+          .collection('branch_menus')
+          .doc(branchId)
+          .collection('items')
+          .doc(globalItemRef.id)
+          .set({
+            'item_id': globalItemRef.id,
+            'name': _nameController.text.trim(),
+            'price': double.tryParse(_priceController.text.trim()) ?? 0,
+            'is_available': true,
+            'category': _selectedCategory,
+            'photo_url': _imageUrl,
+            'added_at': FieldValue.serverTimestamp(),
+            'added_by': uid,
+          });
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Item added to selected branches")),
+    );
+
     _nameController.clear();
     _priceController.clear();
     _descriptionController.clear();
-
     setState(() {
-      _localImageFile = null; // clear preview
-      _imageUrl = null; // clear Supabase URL
-      _selectedCategory = null; // reset dropdown
+      _localImageFile = null;
+      _imageUrl = null;
+      _selectedCategory = null;
+      _selectedBranchIds = [];
+      _selectAllBranches = false;
     });
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Item added successfully")));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Add Item")),
+      appBar: AppBar(title: const Text("Add Item to Branches")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -138,46 +153,58 @@ class _AddItemPageState extends State<AddItemPage> {
             customTextField(_nameController, "Item Name"),
             customTextField(_priceController, "Item Price"),
             customTextField(_descriptionController, "Item Description"),
-
-            const SizedBox(height: 10),
             DropdownButtonFormField<String>(
               value: _selectedCategory,
               hint: const Text("Select Category"),
-              items: categories.map((cat) {
-                return DropdownMenuItem(value: cat, child: Text(cat));
-              }).toList(),
+              items: categories
+                  .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                  .toList(),
               onChanged: (val) => setState(() => _selectedCategory = val),
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Color(0xFFF8E9F2),
-              ),
             ),
-
             const SizedBox(height: 20),
+            StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('branches').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const CircularProgressIndicator();
+                final branches = snapshot.data!.docs;
+                return Column(
+                  children: [
+                    CheckboxListTile(
+                      title: const Text("Select All Branches"),
+                      value: _selectAllBranches,
+                      onChanged: (val) {
+                        setState(() {
+                          _selectAllBranches = val ?? false;
+                          _selectedBranchIds = _selectAllBranches
+                              ? branches.map((b) => b.id).toList()
+                              : [];
+                        });
+                      },
+                    ),
+                    ...branches.map((doc) {
+                      return CheckboxListTile(
+                        title: Text(doc['branch_name']),
+                        value: _selectedBranchIds.contains(doc.id),
+                        onChanged: (val) {
+                          setState(() {
+                            if (val == true) {
+                              _selectedBranchIds.add(doc.id);
+                            } else {
+                              _selectedBranchIds.remove(doc.id);
+                              _selectAllBranches = false;
+                            }
+                          });
+                        },
+                      );
+                    }),
+                  ],
+                );
+              },
+            ),
             ElevatedButton(
               onPressed: pickImage,
-              child: const Text("Choose Item Image"),
+              child: const Text("Choose Image"),
             ),
-
-            if (_localImageFile != null) ...[
-              const SizedBox(height: 10),
-              const Text(
-                "Preview:",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 5),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.file(
-                  _localImageFile!,
-                  height: 150,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 20),
             ElevatedButton(onPressed: addItem, child: const Text("Add Item")),
           ],
         ),

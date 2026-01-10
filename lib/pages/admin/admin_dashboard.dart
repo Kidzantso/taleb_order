@@ -5,6 +5,7 @@ import 'analytics_page.dart';
 import 'profile_page.dart';
 import 'add_item_page.dart';
 import 'view_workers.dart';
+// import 'migration_page.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});

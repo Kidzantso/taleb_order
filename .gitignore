@@ -51,3 +51,4 @@ analysis_options.yaml
 pubspec.yaml
 pubspec.lock
 .env
+devtools_options.yaml
