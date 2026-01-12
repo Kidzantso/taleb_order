@@ -29,12 +29,34 @@ class _AddWaiterPageState extends State<AddWaiterPage> {
     }
 
     try {
+      // ✅ Get current manager user
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Manager not logged in")));
+        return;
+      }
+      final managerDoc = await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+      final managerData = managerDoc.data();
+      final branchId = managerData?['branch_id'];
+
+      if (branchId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Manager has no branch assigned")),
+        );
+        return;
+      }
+
+      // ✅ Create waiter account
       UserCredential waiterCred = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // ✅ Concatenate first + last name
       final fullName =
           "${_firstNameController.text.trim()} ${_lastNameController.text.trim()}";
 
@@ -42,7 +64,7 @@ class _AddWaiterPageState extends State<AddWaiterPage> {
         'email': _emailController.text.trim(),
         'full_name': fullName,
         'role': 'waiter',
-        'branch_id': null,
+        'branch_id': branchId, // ✅ linked to manager's branch
         'created_at': FieldValue.serverTimestamp(),
       });
 
@@ -52,7 +74,7 @@ class _AddWaiterPageState extends State<AddWaiterPage> {
       _passwordController.clear();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Waiter added successfully")),
+        const SnackBar(content: Text("Waiter added and linked to branch ✅")),
       );
     } catch (e) {
       _emailController.clear();

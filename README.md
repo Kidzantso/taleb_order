@@ -10,14 +10,15 @@ The app supports four types of users:
 
 ---
 
-## ✅ Progress So Far (Milestone 1 & 2)
+## ✅ Progress So Far
 ### 🔧 Setup
 - Integrated **Firebase** into Flutter project.
 - Configured **Authentication** (Email/Password).
 - Connected **Firestore Database** with collections:
   - `users` → stores all user profiles (admin, manager, waiter, customer).
   - `branches` → stores branch details.
-  - `menus` → branch menus (to be expanded later).
+  - `branch_menus` → branch menus -> collections of menus -> collections of items.
+  - `items` → global catalog of menu items.
   - `orders` → customer orders.
 
 ### 📝 Implemented Screens
@@ -45,7 +46,7 @@ The app supports four types of users:
 
 - **Add Waiter Page**
   - Manager creates waiter accounts with **first name + last name → full_name**.
-  - Validation: required fields + email format check.
+  - Validation: required fields + email format check and branch linking to his branch.
 
 - **Branch Page**
   - Admin adds new branches.
@@ -62,15 +63,21 @@ The app supports four types of users:
     - Admin cannot delete themselves (shows centered “-”).
 
 - **View Waiters Page (Manager)**
-  - Displays waiters with:
+  - Displays waiters within the manager's branch with:
     - Case-insensitive alphabetical or date sorting.
     - Compact table layout (fixed widths, no horizontal scrolling).
     - Dates formatted as `DD/MM/YY`.
     - Tooltip + ellipsis for long names.
     - Delete functionality with confirmation dialog.
 
-- **Customer Page (Placeholder)**
-  - Simple landing page for customers after login.
+- **Menu Items Page (Manager)**
+  - Managers can add/remove items from the branch menu using the global catalog.
+  - Toggle availability for items (visible/hidden) without removing them.
+  - Displays item photo (if available), category, price, and description.
+  - Real-time updates via Firestore (`items` and `branch_menus/<branchId>/items`).
+
+- **Customer Page**
+  - Can view Menus for each branch (only available items).
 
 ---
 
@@ -94,7 +101,9 @@ The app supports four types of users:
 lib/
  ├── main.dart
  ├── utils/
- │    └── validators.dart        # validation functions
+ │    ├── validators.dart        # validation functions
+ │    ├── migration_utils.dart   # functions for Firestore datamigration
+ │    └── backfill_created_at.dart  # backfill created_at field for existing users
  ├── widgets/
  │    └── custom_widgets.dart    # reusable styled textfields/buttons
  ├── pages/
@@ -110,26 +119,28 @@ lib/
  │    │    ├── analytics_page.dart
  │    │    └── profile_page.dart
  │    ├── manager/
- │    │    ├── manager_page.dart
- │    │    └── view_waiters_page.dart
+ │    │    ├── manager_dashboard.dart
+ │    │    ├── add_waiter_page.dart
+ │    │    ├── branch_analytics.dart
+ │    │    ├── view_waiters_page.dart
+ │    │    └── menu_items_page.dart
  │    ├── waiter/
  │    │    └── waiter_page.dart
  │    └── customer/
- │         └── customer_page.dart
+ │         ├── customer_page.dart
+ │         └── customer_menu_page.dart
 ```
 
 ---
 
-## 🚀 Next Steps (Milestone 3)
-- Expand **Admin Dashboard** to add global menu items (later integrate Supabase for item photos).
-- Build **Manager Page** to:
-  - Assign items from global catalog to branch menus.
+## 🚀 Next Steps
 - Build **Waiter Page** to:
   - View orders.
   - Mark orders as served.
 - Enhance **Customer Page** to:
-  - Browse branch menus.
   - Place orders.
   - View past orders.
-- Add **search bars** in view pages for quick filtering by name.
+- Add **search bars** in view pages for quick filtering by name using debounce and abort.
+- signout functionality for all user types and session store.
+- Kitchen display page for order preparation using diffrent kinds of scheduling (Multi queue - FIFO - Round Robin).
 - Implement **analytics dashboard** for admins (sales, orders, performance).

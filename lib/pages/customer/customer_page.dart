@@ -1,29 +1,85 @@
 import 'package:flutter/material.dart';
+import 'customer_menu_page.dart';
 
 class CustomerPage extends StatelessWidget {
   const CustomerPage({super.key});
 
+  Widget _buildOption({
+    required BuildContext context,
+    required String title,
+    required String imagePath,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  imagePath,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Customer Dashboard")),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "Welcome Customer!",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // Later: Browse menu, place orders
-              },
-              child: const Text("View Menu & Orders"),
-            ),
-          ],
-        ),
+      appBar: AppBar(title: const Text("Customer Options")),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildOption(
+            context: context,
+            title: "Dine In",
+            imagePath: "assets/images/menu.jpg",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CustomerMenuPage()),
+              );
+            },
+          ),
+          _buildOption(
+            context: context,
+            title: "Drive Thru",
+            imagePath: "assets/images/drive_thru.jpg",
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Drive Thru not available yet")),
+              );
+            },
+          ),
+          _buildOption(
+            context: context,
+            title: "Order Online",
+            imagePath: "assets/images/order.jpg",
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Order Online not available yet")),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
