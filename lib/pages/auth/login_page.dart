@@ -110,6 +110,12 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center, // ✅ vertical center
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Image.asset(
+                'assets/images/TaleborderIcon.png',
+                width: 100,
+                height: 100,
+              ),
+              const SizedBox(height: 20),
               customTextField(_emailController, "Email"),
               const SizedBox(height: 12),
               customTextField(_passwordController, "Password", obscure: true),

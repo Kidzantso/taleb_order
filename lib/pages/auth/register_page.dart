@@ -73,6 +73,12 @@ class _RegisterPageState extends State<RegisterPage> {
             mainAxisAlignment: MainAxisAlignment.center, // ✅ vertical center
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Image.asset(
+                'assets/images/TaleborderIcon.png',
+                width: 100,
+                height: 100,
+              ),
+              const SizedBox(height: 20),
               customTextField(_firstNameController, "First Name"),
               const SizedBox(height: 12),
               customTextField(_lastNameController, "Last Name"),
