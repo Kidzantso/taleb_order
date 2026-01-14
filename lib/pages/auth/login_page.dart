@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../admin/admin_dashboard.dart';
 import '../customer/customer_page.dart';
 import '../manager/manager_dashboard.dart';
@@ -10,8 +11,10 @@ import '../../utils/validators.dart';
 import '../../widgets/custom_widget.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
-  _LoginPageState createState() => _LoginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
@@ -21,44 +24,69 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  Future<void> loginUser() async {
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingSession();
+  }
+
+  /// ✅ If user already logged in, redirect immediately
+  Future<void> _checkExistingSession() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        _navigateByRole(userDoc['role']);
+      }
+    }
+  }
+
+  /// ✅ Centralized role routing
+  void _navigateByRole(String role) {
+    Widget page;
+    switch (role) {
+      case 'admin':
+        page = const AdminDashboard();
+        break;
+      case 'customer':
+        page = const CustomerPage();
+        break;
+      case 'manager':
+        page = const ManagerDashboard();
+        break;
+      case 'waiter':
+        page = const WaiterPage();
+        break;
+      default:
+        page = const LoginPage();
+    }
+
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => page));
+  }
+
+  Future<void> _loginUser() async {
     if (!validateEmail(context, _emailController.text) ||
         !validateField(context, _passwordController.text, "Password")) {
       return;
     }
 
     try {
-      UserCredential userCred = await _auth.signInWithEmailAndPassword(
+      final userCred = await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      DocumentSnapshot userDoc = await _firestore
+      final userDoc = await _firestore
           .collection('users')
           .doc(userCred.user!.uid)
           .get();
-      String role = userDoc['role'];
 
-      if (role == 'admin') {
-        Navigator.pushReplacement(
+      if (userDoc.exists) {
+        _navigateByRole(userDoc['role']);
+      } else {
+        ScaffoldMessenger.of(
           context,
-          MaterialPageRoute(builder: (_) => const AdminDashboard()),
-        );
-      } else if (role == 'customer') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const CustomerPage()),
-        );
-      } else if (role == 'manager') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const ManagerDashboard()),
-        );
-      } else if (role == 'waiter') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const WaiterPage()),
-        );
+        ).showSnackBar(const SnackBar(content: Text("User role not found")));
       }
     } catch (e) {
       _emailController.clear();
@@ -72,25 +100,33 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Login")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            customTextField(_emailController, "Email"),
-            customTextField(_passwordController, "Password", obscure: true),
-            SizedBox(height: 20),
-            ElevatedButton(onPressed: loginUser, child: Text("Login")),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => RegisterPage()),
-                );
-              },
-              child: Text("Register as Customer"),
-            ),
-          ],
+      appBar: AppBar(title: const Text("Login")),
+      body: Center(
+        // ✅ centers everything vertically & horizontally
+        child: SingleChildScrollView(
+          // ✅ prevents overflow on small screens
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center, // ✅ vertical center
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              customTextField(_emailController, "Email"),
+              const SizedBox(height: 12),
+              customTextField(_passwordController, "Password", obscure: true),
+              const SizedBox(height: 20),
+              ElevatedButton(onPressed: _loginUser, child: const Text("Login")),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegisterPage()),
+                  );
+                },
+                child: const Text("Register as Customer"),
+              ),
+            ],
+          ),
         ),
       ),
     );

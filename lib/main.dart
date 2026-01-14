@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Food Ordering App',
+      title: 'Taleb Order',
       theme: appTheme,
       home: LoginPage(), // Start with LoginPage
     );

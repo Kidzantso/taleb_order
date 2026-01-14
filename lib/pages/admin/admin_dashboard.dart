@@ -5,10 +5,21 @@ import 'analytics_page.dart';
 import 'profile_page.dart';
 import 'add_item_page.dart';
 import 'view_workers.dart';
+import '../../pages/auth/login_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 // import 'migration_page.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
+
+  Future<void> _signOut(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +53,16 @@ class AdminDashboard extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Admin Dashboard")),
+      appBar: AppBar(
+        title: const Text("Admin Dashboard"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: "Sign Out",
+            onPressed: () => _signOut(context),
+          ),
+        ],
+      ),
       body: GridView.builder(
         padding: const EdgeInsets.all(20),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

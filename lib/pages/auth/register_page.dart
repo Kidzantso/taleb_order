@@ -5,8 +5,10 @@ import '../../utils/validators.dart';
 import '../../widgets/custom_widget.dart';
 
 class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key}); // ✅ can be const
+
   @override
-  _RegisterPageState createState() => _RegisterPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
 class _RegisterPageState extends State<RegisterPage> {
@@ -32,7 +34,6 @@ class _RegisterPageState extends State<RegisterPage> {
         password: _passwordController.text.trim(),
       );
 
-      // ✅ Concatenate first + last name
       final fullName =
           "${_firstNameController.text.trim()} ${_lastNameController.text.trim()}";
 
@@ -63,20 +64,29 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Register Customer")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            customTextField(_firstNameController, "First Name"),
-            customTextField(_lastNameController, "Last Name"),
-            customTextField(_emailController, "Email"),
-            customTextField(_passwordController, "Password", obscure: true),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: registerCustomer,
-              child: const Text("Register"),
-            ),
-          ],
+      body: Center(
+        // ✅ centers everything vertically & horizontally
+        child: SingleChildScrollView(
+          // ✅ prevents overflow on small screens
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center, // ✅ vertical center
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              customTextField(_firstNameController, "First Name"),
+              const SizedBox(height: 12),
+              customTextField(_lastNameController, "Last Name"),
+              const SizedBox(height: 12),
+              customTextField(_emailController, "Email"),
+              const SizedBox(height: 12),
+              customTextField(_passwordController, "Password", obscure: true),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: registerCustomer,
+                child: const Text("Register"),
+              ),
+            ],
+          ),
         ),
       ),
     );

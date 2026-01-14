@@ -5,12 +5,22 @@ import 'add_waiter_page.dart';
 import 'branch_analytics.dart';
 import 'menu_items_page.dart';
 import 'view_waiters.dart';
+import '../../pages/auth/login_page.dart';
 
 class ManagerDashboard extends StatefulWidget {
   const ManagerDashboard({super.key});
 
   @override
   State<ManagerDashboard> createState() => _ManagerDashboardState();
+}
+
+Future<void> _signOut(BuildContext context) async {
+  await FirebaseAuth.instance.signOut();
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (_) => const LoginPage()),
+    (route) => false,
+  );
 }
 
 class _ManagerDashboardState extends State<ManagerDashboard> {
@@ -60,7 +70,16 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Manager Dashboard")),
+      appBar: AppBar(
+        title: const Text("Manager Dashboard"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: "Sign Out",
+            onPressed: () => _signOut(context),
+          ),
+        ],
+      ),
       body: GridView.builder(
         padding: const EdgeInsets.all(20),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 import 'customer_menu_page.dart';
+import '../../pages/auth/login_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CustomerPage extends StatelessWidget {
   const CustomerPage({super.key});
+
+  Future<void> _signOut(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
 
   Widget _buildOption({
     required BuildContext context,
@@ -44,7 +55,16 @@ class CustomerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Customer Options")),
+      appBar: AppBar(
+        title: const Text("Customer Dashboard"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: "Sign Out",
+            onPressed: () => _signOut(context),
+          ),
+        ],
+      ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
