@@ -3,16 +3,25 @@ import 'package:firebase_core/firebase_core.dart';
 import 'pages/auth/login_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // ✅ Riverpod import
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
   await dotenv.load(fileName: ".env");
+
+  // Initialize Firebase
   await Firebase.initializeApp();
+
+  // Initialize Supabase
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
-  runApp(const MyApp());
+
+  // ✅ Wrap app in ProviderScope for Riverpod
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 final ThemeData appTheme = ThemeData(
@@ -63,7 +72,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Taleb Order',
       theme: appTheme,
-      home: LoginPage(), // Start with LoginPage
+      home: const LoginPage(), // ✅ Start with LoginPage
     );
   }
 }

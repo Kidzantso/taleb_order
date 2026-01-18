@@ -1,80 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'checkout_page.dart';
+import 'cart_provider.dart';
 
-class CustomerMenuPage extends StatefulWidget {
+class CustomerMenuPage extends ConsumerStatefulWidget {
   const CustomerMenuPage({super.key});
 
   @override
-  State<CustomerMenuPage> createState() => _CustomerMenuPageState();
+  ConsumerState<CustomerMenuPage> createState() => _CustomerMenuPageState();
 }
 
-class _CustomerMenuPageState extends State<CustomerMenuPage> {
-  final _firestore = FirebaseFirestore.instance;
+class _CustomerMenuPageState extends ConsumerState<CustomerMenuPage> {
   String? _selectedBranchId;
   String? _selectedBranchName;
 
-  final Map<String, int> _cart = {}; // itemId → quantity
-  final Map<String, Map<String, dynamic>> _itemDetails = {}; // itemId → data
-
-  void _addItem(String itemId, Map<String, dynamic> data) {
-    setState(() {
-      _cart[itemId] = (_cart[itemId] ?? 0) + 1;
-      _itemDetails[itemId] = data;
-    });
-  }
-
-  void _removeItem(String itemId) {
-    if (_cart[itemId] == 1) {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text("Remove item?"),
-          content: const Text(
-            "Do you want to cancel this item from your order?",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("No"),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _cart.remove(itemId);
-                  _itemDetails.remove(itemId);
-                });
-                Navigator.pop(context);
-              },
-              child: const Text("Yes"),
-            ),
-          ],
-        ),
-      );
-    } else {
-      setState(() {
-        _cart[itemId] = _cart[itemId]! - 1;
-      });
-    }
-  }
-
-  void _goToCheckout() {
-    if (_selectedBranchId == null || _selectedBranchName == null) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CheckoutPage(
-          cart: _cart,
-          itemDetails: _itemDetails,
-          branchId: _selectedBranchId!,
-          branchName: _selectedBranchName!,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final _firestore = FirebaseFirestore.instance;
+    final cart = ref.watch(cartProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text("Browse Menus")),
       body: Column(
@@ -92,9 +37,7 @@ class _CustomerMenuPageState extends State<CustomerMenuPage> {
                   return DropdownMenuItem<String>(
                     value: doc.id,
                     child: Text(data['branch_name'] ?? "Unnamed Branch"),
-                    onTap: () {
-                      _selectedBranchName = data['branch_name'];
-                    },
+                    onTap: () => _selectedBranchName = data['branch_name'],
                   );
                 }).toList(),
                 onChanged: (val) => setState(() => _selectedBranchId = val),
@@ -125,7 +68,18 @@ class _CustomerMenuPageState extends State<CustomerMenuPage> {
                           final doc = menus[index];
                           final data = doc.data() as Map<String, dynamic>;
                           final itemId = doc.id;
-                          final quantity = _cart[itemId] ?? 0;
+                          final quantity = cart
+                              .firstWhere(
+                                (i) => i.id == itemId,
+                                orElse: () => CartItem(
+                                  id: itemId,
+                                  name: data['name'],
+                                  price: (data['price'] ?? 0).toDouble(),
+                                  photoUrl: data['photo_url'] ?? "",
+                                  quantity: 0,
+                                ),
+                              )
+                              .quantity;
 
                           return Card(
                             margin: const EdgeInsets.symmetric(
@@ -153,7 +107,9 @@ class _CustomerMenuPageState extends State<CustomerMenuPage> {
                                   if (quantity > 0)
                                     IconButton(
                                       icon: const Icon(Icons.remove),
-                                      onPressed: () => _removeItem(itemId),
+                                      onPressed: () => ref
+                                          .read(cartProvider.notifier)
+                                          .removeItem(itemId),
                                     ),
                                   if (quantity > 0)
                                     Text(
@@ -162,7 +118,18 @@ class _CustomerMenuPageState extends State<CustomerMenuPage> {
                                     ),
                                   IconButton(
                                     icon: const Icon(Icons.add),
-                                    onPressed: () => _addItem(itemId, data),
+                                    onPressed: () => ref
+                                        .read(cartProvider.notifier)
+                                        .addItem(
+                                          CartItem(
+                                            id: itemId,
+                                            name: data['name'],
+                                            price: (data['price'] ?? 0)
+                                                .toDouble(),
+                                            photoUrl: data['photo_url'] ?? "",
+                                            quantity: 1,
+                                          ),
+                                        ),
                                   ),
                                 ],
                               ),
@@ -175,10 +142,22 @@ class _CustomerMenuPageState extends State<CustomerMenuPage> {
           ),
         ],
       ),
-      floatingActionButton: _cart.isNotEmpty
+      floatingActionButton: cart.isNotEmpty
           ? FloatingActionButton.extended(
-              onPressed: _goToCheckout,
-              label: Text("Cart (${_cart.values.reduce((a, b) => a + b)})"),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CheckoutPage(
+                      branchId: _selectedBranchId!,
+                      branchName: _selectedBranchName!,
+                    ),
+                  ),
+                );
+              },
+              label: Text(
+                "Cart (${ref.read(cartProvider.notifier).totalItems()})",
+              ),
               icon: const Icon(Icons.shopping_cart),
             )
           : null,

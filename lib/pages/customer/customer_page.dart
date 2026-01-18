@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'customer_menu_page.dart';
 import '../../pages/auth/login_page.dart';
+import 'order_history_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class CustomerPage extends StatelessWidget {
@@ -96,6 +97,17 @@ class CustomerPage extends StatelessWidget {
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Order Online not available yet")),
+              );
+            },
+          ),
+          _buildOption(
+            context: context,
+            title: "Order History",
+            imagePath: "assets/images/history.png",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const OrderHistoryPage()),
               );
             },
           ),
