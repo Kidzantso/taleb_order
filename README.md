@@ -2,28 +2,27 @@
 
 ## 📌 Overview
 Taleb Order is a multi-role food ordering application built with **Flutter** and **Firebase**.  
-The app supports four types of users:
+The app supports five types of users:
 - **Admin** → manages branches, adds managers, views workers, and later adds global menu items.
 - **Manager** → manages waiters, assigns items to branch menus, and views/deletes waiters.
-- **Waiter** → views orders and marks them as served.
-- **Customer** → registers, browses branch menus, places orders, and views past orders.
-
----
+- **Waiter** → views orders in their branch and marks them as served.
+- **Kitchen** → shared branch account, views pending orders, applies scheduling strategies, and marks them as serving.
+- **Customer** → registers, browses branch menus, places orders, and views past orders with status tracking.
 
 ## ✅ Progress So Far
 ### 🔧 Setup
 - Integrated **Firebase** into Flutter project.
 - Configured **Authentication** (Email/Password).
 - Connected **Firestore Database** with collections:
-  - `users` → stores all user profiles (admin, manager, waiter, customer).
+  - `users` → stores all user profiles (admin, manager, waiter, kitchen, customer).
   - `branches` → stores branch details.
-  - `branch_menus` → branch menus -> collections of menus -> collections of items.
+  - `branch_menus` → branch menus → collections of items.
   - `items` → global catalog of menu items.
-  - `orders` → customer orders.
+  - `orders` → customer orders with status (`pending`, `serving`, `served`).
 
 ### 📝 Implemented Screens
 - **Login Page**
-  - All types of users login and land on their respective dashboards.
+  - Role‑based routing: users land on their respective dashboards after login.
   - Validation: required fields, email format check, error handling.
 
 - **Register Page (Customer)**
@@ -31,10 +30,10 @@ The app supports four types of users:
   - Validation: required fields + email format check.
 
 - **Admin Dashboard**
-  - Grid layout with various options:
+  - Grid layout with options:
     - Add Manager
     - Add Item
-    - Add Branch (with manager linking)
+    - Add Branch (with manager linking + auto kitchen account creation)
     - View Workers
     - View Analytics (placeholder)
     - Profile (placeholder)
@@ -46,17 +45,18 @@ The app supports four types of users:
 
 - **Add Waiter Page**
   - Manager creates waiter accounts with **first name + last name → full_name**.
-  - Validation: required fields + email format check and branch linking to his branch.
+  - Validation: required fields + email format check and branch linking.
 
 - **Branch Page**
   - Admin adds new branches.
+  - Auto‑generates a **shared kitchen account** with default credentials (`kitchen_branchId@taleborder.com` / `taleborderkitchen#1-2-3`).
   - Admin links managers to branches (updates both `branches.manager_id` and `users.branch_id`).
 
 - **View Workers Page (Admin)**
   - Displays all users with:
     - Case-insensitive alphabetical or date sorting.
     - Compact table layout (fixed widths, no horizontal scrolling).
-    - Role abbreviations (M, W, C, A).
+    - Role abbreviations (M, W, C, A, K).
     - Dates formatted as `DD/MM/YY`.
     - Tooltip + ellipsis for long names.
     - Delete functionality with confirmation dialog.
@@ -72,12 +72,37 @@ The app supports four types of users:
 
 - **Menu Items Page (Manager)**
   - Managers can add/remove items from the branch menu using the global catalog.
-  - Toggle availability for items (visible/hidden) without removing them.
-  - Displays item photo (if available), category, price, and description.
-  - Real-time updates via Firestore (`items` and `branch_menus/<branchId>/items`).
+  - Toggle availability for items (visible/hidden).
+  - Displays item photo, category, price, and description.
+  - Real-time updates via Firestore.
 
-- **Customer Page**
-  - Can view Menus for each branch (only available items).
+- **Customer Menu Page**
+  - Customers browse branch menus.
+  - Integrated **Riverpod cart provider** for add/remove items.
+  - Cart synced across menu and checkout.
+
+- **Checkout Page (Customer)**
+  - Displays cart items with images.
+  - Delete confirmation popup.
+  - Prevents empty orders.
+  - Saves orders with `status = pending`.
+  - Clears cart after successful order.
+
+- **Order History Page (Customer)**
+  - Displays past orders with status badges:
+    - 🔴 Pending (kitchen)
+    - 🟡 Serving (waiter)
+    - 🟢 Served (completed)
+
+- **Kitchen Page**
+  - Shared branch account login.
+  - Views `pending` orders.
+  - Marks orders as `serving`.
+  - FIFO scheduling (by `created_at`).
+
+- **Waiter Page**
+  - Views `serving` orders for their branch.
+  - Marks orders as `served`.
 
 ---
 
@@ -93,6 +118,7 @@ The app supports four types of users:
   - Ellipsis + tooltip for long names
   - Centered action icons/dash
   - No horizontal scrolling
+- Status badges with color coding for orders.
 
 ---
 
@@ -101,11 +127,11 @@ The app supports four types of users:
 lib/
  ├── main.dart
  ├── utils/
- │    ├── validators.dart        # validation functions
- │    ├── migration_utils.dart   # functions for Firestore datamigration
- │    └── backfill_created_at.dart  # backfill created_at field for existing users
+ │    ├── validators.dart
+ │    ├── migration_utils.dart
+ │    └── backfill_created_at.dart
  ├── widgets/
- │    └── custom_widgets.dart    # reusable styled textfields/buttons
+ │    └── custom_widgets.dart
  ├── pages/
  │    ├── auth/
  │    │    ├── login_page.dart
@@ -126,21 +152,35 @@ lib/
  │    │    └── menu_items_page.dart
  │    ├── waiter/
  │    │    └── waiter_page.dart
+ │    ├── kitchen/
+ │    │    └── kitchen_dashboard.dart
  │    └── customer/
+ │         ├── cart_provider.dart
  │         ├── customer_page.dart
- │         └── customer_menu_page.dart
+ │         ├── customer_menu_page.dart
+ │         ├── checkout_page.dart
+ │         └── order_history_page.dart
 ```
 
 ---
 
 ## 🚀 Next Steps
-- Build **Waiter Page** to:
-  - View orders.
-  - Mark orders as served.
-- Enhance **Customer Page** to:
-  - Place orders.
-  - View past orders.
-- Add **search bars** in view pages for quick filtering by name using debounce and abort.
-- signout functionality for all user types and session store.
-- Kitchen display page for order preparation using diffrent kinds of scheduling (Multi queue - FIFO - Round Robin).
-- Implement **analytics dashboard** for admins (sales, orders, performance).
+- **Kitchen Scheduling Strategies**
+  - Extend beyond FIFO:
+    - Round Robin (assign evenly to staff).
+    - Multi‑Queue (separate queues by category).
+- **Analytics Dashboard (Admin)**
+  - Sales, orders, performance metrics.
+- **Search Bars**
+  - Add filtering in view pages with debounce.
+- **Profile Pages**
+  - Allow users to update personal info and change passwords.
+- **Global Menu Management (Admin)**
+  - Admins add/edit/delete items in the global catalog.
+- **Push Notifications**
+  - Notify customers on order status changes.
+- **Drive Through Mode**
+  - Special interface for drive-through orders.
+- **Delivery Mode**
+  - Allow customers to order online for delivery.
+---
