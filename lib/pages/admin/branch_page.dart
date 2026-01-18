@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // ✅ for creating kitchen account
 import '../../utils/validators.dart';
 import '../../widgets/custom_widget.dart';
 
@@ -12,23 +13,57 @@ class BranchPage extends StatefulWidget {
 
 class _BranchPageState extends State<BranchPage> {
   final _firestore = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
   final _branchNameController = TextEditingController();
   String? selectedBranchId;
   String? selectedManagerId;
 
   Future<void> addBranch() async {
-    if (!validateField(context, _branchNameController.text, "Branch Name"))
+    if (!validateField(context, _branchNameController.text, "Branch Name")) {
       return;
+    }
 
-    await _firestore.collection('branches').add({
+    // 1️⃣ Add branch to Firestore
+    final branchDoc = await _firestore.collection('branches').add({
       'branch_name': _branchNameController.text.trim(),
       'manager_id': null,
     });
 
+    final branchId = branchDoc.id;
+    final branchName = _branchNameController.text.trim();
+
+    // 2️⃣ Generate kitchen account credentials
+    final kitchenEmail = "kitchen_$branchName@taleborder.com";
+    const kitchenPassword = "taleborderkitchen#1-2-3";
+
+    try {
+      // 3️⃣ Create kitchen user in Firebase Auth
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: kitchenEmail,
+        password: kitchenPassword,
+      );
+
+      final kitchenUserId = userCredential.user!.uid;
+
+      // 4️⃣ Save kitchen user in Firestore
+      await _firestore.collection('users').doc(kitchenUserId).set({
+        'full_name': "Kitchen - $branchName",
+        'email': kitchenEmail,
+        'role': 'kitchen',
+        'branch_id': branchId,
+        'created_at': FieldValue.serverTimestamp(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Branch + Kitchen account created")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error creating kitchen account: $e")),
+      );
+    }
+
     _branchNameController.clear();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Branch added")));
   }
 
   Future<void> linkManagerToBranch() async {

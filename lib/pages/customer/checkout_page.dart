@@ -52,6 +52,7 @@ class CheckoutPage extends ConsumerWidget {
       "branch_id": branchId,
       "branch_name": branchName,
       "items": itemsList,
+      "status": "pending",
       "total_price": ref.read(cartProvider.notifier).totalPrice(),
       "created_at": FieldValue.serverTimestamp(),
     });

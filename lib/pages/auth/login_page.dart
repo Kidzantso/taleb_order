@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../admin/admin_dashboard.dart';
 import '../customer/customer_page.dart';
 import '../manager/manager_dashboard.dart';
@@ -9,6 +8,7 @@ import '../waiter/waiter_page.dart';
 import 'register_page.dart';
 import '../../utils/validators.dart';
 import '../../widgets/custom_widget.dart';
+import '../kitchen/kitchen_dashboard.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -56,6 +56,9 @@ class _LoginPageState extends State<LoginPage> {
         break;
       case 'waiter':
         page = const WaiterPage();
+        break;
+      case 'kitchen':
+        page = const KitchenPage();
         break;
       default:
         page = const LoginPage();

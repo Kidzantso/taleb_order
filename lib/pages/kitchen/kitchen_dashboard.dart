@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../pages/auth/login_page.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../pages/auth/login_page.dart';
 
-class WaiterPage extends StatefulWidget {
-  const WaiterPage({super.key});
+class KitchenPage extends StatefulWidget {
+  const KitchenPage({super.key});
 
   @override
-  State<WaiterPage> createState() => _WaiterPageState();
+  State<KitchenPage> createState() => _KitchenPageState();
 }
 
 Future<void> _signOut(BuildContext context) async {
@@ -19,7 +19,7 @@ Future<void> _signOut(BuildContext context) async {
   );
 }
 
-class _WaiterPageState extends State<WaiterPage> {
+class _KitchenPageState extends State<KitchenPage> {
   final _firestore = FirebaseFirestore.instance;
   String? _branchId;
 
@@ -27,12 +27,6 @@ class _WaiterPageState extends State<WaiterPage> {
   void initState() {
     super.initState();
     _loadBranchId();
-  }
-
-  Future<void> _markAsServed(String orderId) async {
-    await FirebaseFirestore.instance.collection('orders').doc(orderId).update({
-      "status": "served",
-    });
   }
 
   Future<void> _loadBranchId() async {
@@ -46,7 +40,7 @@ class _WaiterPageState extends State<WaiterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Waiter Dashboard"),
+        title: const Text("Kitchen Dashboard"),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -59,8 +53,8 @@ class _WaiterPageState extends State<WaiterPage> {
         stream: FirebaseFirestore.instance
             .collection('orders')
             .where('branch_id', isEqualTo: _branchId)
-            .where('status', isEqualTo: 'serving') // waiter sees serving orders
-            .orderBy('created_at', descending: false)
+            .where('status', isEqualTo: 'pending') // only kitchen orders
+            .orderBy('created_at', descending: false) // FIFO
             .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
@@ -70,12 +64,7 @@ class _WaiterPageState extends State<WaiterPage> {
           final orders = snapshot.data!.docs;
 
           if (orders.isEmpty) {
-            return const Center(
-              child: Text(
-                "No orders to serve",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-              ),
-            );
+            return const Center(child: Text("No pending orders"));
           }
 
           return ListView.builder(
@@ -98,16 +87,6 @@ class _WaiterPageState extends State<WaiterPage> {
                   children: [
                     ...items.map(
                       (item) => ListTile(
-                        leading:
-                            (item['photo_url'] != null &&
-                                item['photo_url'].toString().isNotEmpty)
-                            ? Image.network(
-                                item['photo_url'],
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.cover,
-                              )
-                            : const Icon(Icons.fastfood, size: 30),
                         title: Text(item['name']),
                         subtitle: Text("Qty: ${item['quantity']}"),
                         trailing: Text("\$${item['price']}"),
@@ -116,8 +95,13 @@ class _WaiterPageState extends State<WaiterPage> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
-                        onPressed: () => _markAsServed(orderId),
-                        child: const Text("Mark as Served"),
+                        onPressed: () async {
+                          await FirebaseFirestore.instance
+                              .collection('orders')
+                              .doc(orderId)
+                              .update({"status": "serving"});
+                        },
+                        child: const Text("Mark as Serving"),
                       ),
                     ),
                   ],
