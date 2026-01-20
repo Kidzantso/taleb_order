@@ -154,7 +154,7 @@ class _AddItemPageState extends State<AddItemPage> {
             customTextField(_priceController, "Item Price"),
             customTextField(_descriptionController, "Item Description"),
             DropdownButtonFormField<String>(
-              value: _selectedCategory,
+              initialValue: _selectedCategory,
               hint: const Text("Select Category"),
               items: categories
                   .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))

@@ -6,6 +6,7 @@ import 'branch_analytics.dart';
 import 'menu_items_page.dart';
 import 'view_waiters.dart';
 import '../../pages/auth/login_page.dart';
+import '../profile_page.dart';
 
 class ManagerDashboard extends StatefulWidget {
   const ManagerDashboard({super.key});
@@ -73,6 +74,15 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
       appBar: AppBar(
         title: const Text("Manager Dashboard"),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: "Sign Out",

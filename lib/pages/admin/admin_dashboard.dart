@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'add_manager_page.dart';
 import 'branch_page.dart';
 import 'analytics_page.dart';
-import 'profile_page.dart';
+import '../profile_page.dart';
 import 'add_item_page.dart';
 import 'view_workers.dart';
 import '../../pages/auth/login_page.dart';
@@ -36,11 +36,6 @@ class AdminDashboard extends StatelessWidget {
         "page": const AnalyticsPage(),
       },
       {
-        "title": "Profile",
-        "icon": Icons.account_circle,
-        "page": const ProfilePage(),
-      },
-      {
         "title": "Add Item",
         "icon": Icons.add_shopping_cart,
         "page": const AddItemPage(),
@@ -56,6 +51,15 @@ class AdminDashboard extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Admin Dashboard"),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: "Sign Out",

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../pages/auth/login_page.dart';
+import '../profile_page.dart';
 
 class KitchenPage extends StatefulWidget {
   const KitchenPage({super.key});
@@ -42,6 +43,15 @@ class _KitchenPageState extends State<KitchenPage> {
       appBar: AppBar(
         title: const Text("Kitchen Dashboard"),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: "Sign Out",

@@ -17,7 +17,7 @@ class _CustomerMenuPageState extends ConsumerState<CustomerMenuPage> {
 
   @override
   Widget build(BuildContext context) {
-    final _firestore = FirebaseFirestore.instance;
+    final firestore = FirebaseFirestore.instance;
     final cart = ref.watch(cartProvider);
 
     return Scaffold(
@@ -25,7 +25,7 @@ class _CustomerMenuPageState extends ConsumerState<CustomerMenuPage> {
       body: Column(
         children: [
           StreamBuilder<QuerySnapshot>(
-            stream: _firestore.collection('branches').snapshots(),
+            stream: firestore.collection('branches').snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) return const CircularProgressIndicator();
               final branches = snapshot.data!.docs;
@@ -49,18 +49,20 @@ class _CustomerMenuPageState extends ConsumerState<CustomerMenuPage> {
             child: _selectedBranchId == null
                 ? const Center(child: Text("Please select a branch"))
                 : StreamBuilder<QuerySnapshot>(
-                    stream: _firestore
+                    stream: firestore
                         .collection('branch_menus')
                         .doc(_selectedBranchId)
                         .collection('items')
                         .where('is_available', isEqualTo: true)
                         .snapshots(),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData)
+                      if (!snapshot.hasData) {
                         return const CircularProgressIndicator();
+                      }
                       final menus = snapshot.data!.docs;
-                      if (menus.isEmpty)
+                      if (menus.isEmpty) {
                         return const Center(child: Text("No available items"));
+                      }
 
                       return ListView.builder(
                         itemCount: menus.length,

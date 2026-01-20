@@ -49,7 +49,7 @@ The app supports five types of users:
 
 - **Branch Page**
   - Admin adds new branches.
-  - Auto‑generates a **shared kitchen account** with default credentials (`kitchen_branchId@taleborder.com` / `taleborderkitchen#1-2-3`).
+  - Auto‑generates a **shared kitchen account** with default credentials (`kitchen_branchName@taleborder.com` / `taleborderkitchen#1-2-3`).
   - Admin links managers to branches (updates both `branches.manager_id` and `users.branch_id`).
 
 - **View Workers Page (Admin)**
@@ -104,6 +104,12 @@ The app supports five types of users:
   - Views `serving` orders for their branch.
   - Marks orders as `served`.
 
+  - **Profile Page**
+  - Accessible from AppBar in all dashboards (Admin, Manager, Kitchen, Waiter).
+  - Displays user info: Full Name, Email.
+  - Role-based navigation back to respective dashboards.
+  - Edit password.
+
 ---
 
 ## 🎨 UI/UX
@@ -133,6 +139,7 @@ lib/
  ├── widgets/
  │    └── custom_widgets.dart
  ├── pages/
+ │    ├── profile_page.dart
  │    ├── auth/
  │    │    ├── login_page.dart
  │    │    └── register_page.dart

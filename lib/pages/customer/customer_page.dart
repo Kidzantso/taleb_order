@@ -3,6 +3,7 @@ import 'customer_menu_page.dart';
 import '../../pages/auth/login_page.dart';
 import 'order_history_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../profile_page.dart';
 
 class CustomerPage extends StatelessWidget {
   const CustomerPage({super.key});
@@ -59,6 +60,15 @@ class CustomerPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Customer Dashboard"),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: "Sign Out",

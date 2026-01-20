@@ -10,7 +10,7 @@ class MenuItemsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final firestore = FirebaseFirestore.instance;
 
-    Future<void> _toggleItem(DocumentSnapshot item) async {
+    Future<void> toggleItem(DocumentSnapshot item) async {
       final itemId = item.id;
       final data = item.data() as Map<String, dynamic>;
       final branchItemRef = firestore
@@ -47,7 +47,7 @@ class MenuItemsPage extends StatelessWidget {
       }
     }
 
-    Future<void> _toggleAvailability(String itemId, bool current) async {
+    Future<void> toggleAvailability(String itemId, bool current) async {
       final branchItemRef = firestore
           .collection('branch_menus')
           .doc(branchId)
@@ -123,7 +123,7 @@ class MenuItemsPage extends StatelessWidget {
                               isInBranch ? Icons.remove : Icons.add,
                               color: isInBranch ? Colors.red : Colors.green,
                             ),
-                            onPressed: () => _toggleItem(item),
+                            onPressed: () => toggleItem(item),
                           ),
                           if (isInBranch)
                             IconButton(
@@ -134,7 +134,7 @@ class MenuItemsPage extends StatelessWidget {
                                 color: isAvailable ? Colors.blue : Colors.grey,
                               ),
                               onPressed: () =>
-                                  _toggleAvailability(item.id, isAvailable),
+                                  toggleAvailability(item.id, isAvailable),
                             ),
                         ],
                       ),

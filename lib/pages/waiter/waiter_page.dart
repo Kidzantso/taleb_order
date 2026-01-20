@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../pages/auth/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../profile_page.dart';
 
 class WaiterPage extends StatefulWidget {
   const WaiterPage({super.key});
@@ -48,6 +49,15 @@ class _WaiterPageState extends State<WaiterPage> {
       appBar: AppBar(
         title: const Text("Waiter Dashboard"),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: "Sign Out",

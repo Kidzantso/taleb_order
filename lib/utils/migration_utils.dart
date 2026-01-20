@@ -10,8 +10,9 @@ Future<void> migrateItemsAndBranchMenus() async {
     final updates = <String, dynamic>{};
 
     if (data['is_active'] == null) updates['is_active'] = true;
-    if (data['created_at'] == null)
+    if (data['created_at'] == null) {
       updates['created_at'] = FieldValue.serverTimestamp();
+    }
     if (data['created_by'] == null) updates['created_by'] = "system";
 
     if (updates.isNotEmpty) {
