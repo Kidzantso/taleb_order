@@ -98,7 +98,9 @@ The app supports five types of users:
   - Shared branch account login.
   - Views `pending` orders.
   - Marks orders as `serving`.
-  - FIFO scheduling (by `created_at`).
+  - FIFO scheduling.
+  - Round Robin scheduling.
+  - Multi-Queue scheduling.
 
 - **Waiter Page**
   - Views `serving` orders for their branch.
